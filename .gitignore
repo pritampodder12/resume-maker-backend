@@ -1,0 +1,162 @@
+# ================================
+# SECRETS & CREDENTIALS
+# ================================
+# Secret properties (database, JWT, etc.)
+src/main/resources/secrets.properties
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Keep templates for reference
+!src/main/resources/secret.properties.example
+!src/main/resources/application-example.yml
+
+# ================================
+# JAVA / MAVEN
+# ================================
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ================================
+# SPRING BOOT
+# ================================
+# Spring Boot
+spring-boot-devtools.properties
+
+# ================================
+# IDE - IntelliJ IDEA
+# ================================
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# ================================
+# IDE - Eclipse
+# ================================
+.settings/
+.classpath
+.project
+.metadata/
+bin/
+tmp/
+
+# ================================
+# IDE - VS Code
+# ================================
+.vscode/
+*.code-workspace
+
+# ================================
+# IDE - NetBeans
+# ================================
+nb-configuration.xml
+nbproject/
+nbbuild/
+dist/
+nbdist/
+
+# ================================
+# OPERATING SYSTEM
+# ================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+
+# Linux
+*~
+
+# ================================
+# DATABASE
+# ================================
+# H2 database files
+*.h2.db
+*.mv.db
+*.trace.db
+
+# Derby database files
+derby.log
+
+# ================================
+# LOGS & TEMP FILES
+# ================================
+logs/
+*.log
+*.log.*
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ================================
+# BUILD OUTPUT
+# ================================
+/build/
+/target/
+/out/
+.gradle/
+build/
+
+# ================================
+# TEST COVERAGE
+# ================================
+/coverage/
+/.nyc_output/
+*.lcov
+
+# ================================
+# DOCKER
+# ================================
+docker-compose.override.yml
+
+# ================================
+# MISC
+# ================================
+# Backup files
+*.bak
+*.backup
+*.old

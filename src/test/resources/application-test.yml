@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:15:///resume_builder_test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+  flyway:
+    enabled: false
+
+app:
+  jwt:
+    secret: test-secret-key-must-be-at-least-32-characters-long-for-testing
+    access-token-expiration: 60000  # 1 minute
+    refresh-token-expiration: 300000  # 5 minutes
+
+logging:
+  level:
+    root: WARN
+    com.resumebuilder: DEBUG
