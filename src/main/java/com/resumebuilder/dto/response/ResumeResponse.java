@@ -1,5 +1,6 @@
 package com.resumebuilder.dto.response;
 
+import com.resumebuilder.dto.response.resume.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -45,4 +47,16 @@ public class ResumeResponse {
 
     @Schema(description = "Current publish version", example = "1")
     private Integer publishVersion;
+
+    private List<EducationResponse> education;
+
+    private List<ExperienceResponse> experience;
+
+    private List<CertificationsResponse> certifications;
+
+    private List<ProjectsResponse> projects;
+
+    private List<SkillsResponse> skills;
+
+    private List<SectionResponse> sections;
 }

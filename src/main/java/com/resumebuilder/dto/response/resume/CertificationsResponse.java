@@ -1,0 +1,27 @@
+package com.resumebuilder.dto.response.resume;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Schema(description = "Certification data")
+public class CertificationsResponse {
+    private String name;
+    private String issuingOrganization;
+    private String credentialId;
+    private String credentialUrl;
+    private LocalDate issueDate;
+    private LocalDate expirationDate;
+    private boolean doesNotExpire = false;
+    private List<String> description;
+    private Integer sortOrder = 0;
+}

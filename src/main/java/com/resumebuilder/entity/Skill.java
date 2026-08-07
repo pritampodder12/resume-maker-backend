@@ -2,7 +2,10 @@ package com.resumebuilder.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -38,8 +41,9 @@ public class Skill extends BaseEntity {
     @Column(name = "years_of_experience")
     private Integer yearsOfExperience;
 
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
+    @JdbcTypeCode((SqlTypes.ARRAY))
+    @Column(name = "description", columnDefinition = "TEXT[]")
+    private List<String> description;
 
     @Column(name = "sort_order")
     @Builder.Default

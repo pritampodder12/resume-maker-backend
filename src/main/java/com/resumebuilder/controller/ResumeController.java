@@ -77,4 +77,6 @@ public class ResumeController {
         resumeService.deleteResume(id);
         return ResponseEntity.ok(ApiResponse.success("Resume deleted successfully"));
     }
+
+//    public Response
 }

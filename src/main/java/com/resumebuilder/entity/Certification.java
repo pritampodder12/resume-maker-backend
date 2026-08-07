@@ -2,8 +2,11 @@ package com.resumebuilder.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -48,8 +51,9 @@ public class Certification extends BaseEntity {
     @Builder.Default
     private boolean doesNotExpire = false;
 
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
+    @JdbcTypeCode((SqlTypes.ARRAY))
+    @Column(name = "description", columnDefinition = "TEXT[]")
+    private List<String> description;
 
     @Column(name = "sort_order")
     @Builder.Default
