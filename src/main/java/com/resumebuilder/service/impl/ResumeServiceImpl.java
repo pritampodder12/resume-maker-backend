@@ -5,8 +5,7 @@ import com.resumebuilder.dto.request.CreateResumeRequest;
 import com.resumebuilder.dto.request.UpdateResumeRequest;
 import com.resumebuilder.dto.response.PagedResponse;
 import com.resumebuilder.dto.response.ResumeResponse;
-import com.resumebuilder.entity.Resume;
-import com.resumebuilder.entity.User;
+import com.resumebuilder.entity.*;
 import com.resumebuilder.exception.BadRequestException;
 import com.resumebuilder.exception.ResourceNotFoundException;
 import com.resumebuilder.exception.UnauthorizedException;
@@ -26,7 +25,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,10 +56,125 @@ public class ResumeServiceImpl implements ResumeService {
                 .active(true)
                 .build();
 
-        resume = resumeRepository.save(resume);
-        log.info("Resume created successfully with ID: {}", resume.getId());
+        // Map Education section
+//        if (request.getEducation() != null && !request.getEducation().isEmpty()) {
+        List<Education> educationList = request.getEducation().stream()
+                .map(req -> Education.builder()
+                        .institutionName(req.getInstitutionName())
+                        .degree(req.getDegree())
+                        .fieldOfStudy(req.getFieldOfStudy())
+                        .location(req.getLocation())
+                        .startDate(req.getStartDate())
+                        .endDate(req.getEndDate())
+                        .current(req.isCurrent())
+                        .gpa(req.getGpa())
+                        .description(req.getDescription())
+                        .sortOrder(req.getSortOrder())
+                        .resume(resume)
+                        .build())
+                .toList();
+        resume.setEducation(new HashSet<>(educationList));
+        log.debug("Mapped {} education entries", educationList.size());
+//        }
 
-        return resumeMapper.toResumeResponse(resume);
+        // Map Experience section
+//        if (request.getExperience() != null && !request.getExperience().isEmpty()) {
+        List<Experience> experiences = request.getExperience().stream()
+                .map(req -> Experience.builder()
+                        .companyName(req.getCompanyName())
+                        .position(req.getPosition())
+                        .location(req.getLocation())
+                        .employmentType(req.getEmploymentType())
+                        .startDate(req.getStartDate())
+                        .endDate(req.getEndDate())
+                        .current(req.isCurrent())
+                        .description(req.getDescription())
+                        .highlights(req.getHighlights())
+                        .sortOrder(req.getSortOrder())
+                        .resume(resume)
+                        .build())
+                .toList();
+        resume.setExperience(new HashSet<>(experiences));
+        log.debug("Mapped {} experience entries", experiences.size());
+//        }
+
+        // Map Certifications section
+//        if (request.getCertifications() != null && !request.getCertifications().isEmpty()) {
+        List<Certification> certifications = request.getCertifications().stream()
+                .map(req -> Certification.builder()
+                        .name(req.getName())
+                        .issuingOrganization(req.getIssuingOrganization())
+                        .credentialId(req.getCredentialId())
+                        .credentialUrl(req.getCredentialUrl())
+                        .issueDate(req.getIssueDate())
+                        .expirationDate(req.getExpirationDate())
+                        .doesNotExpire(req.isDoesNotExpire())
+                        .description(req.getDescription())
+                        .sortOrder(req.getSortOrder())
+                        .resume(resume)
+                        .build())
+                .toList();
+        resume.setCertifications(new HashSet<>(certifications));
+        log.debug("Mapped {} certification entries", certifications.size());
+//        }
+
+        // Map Projects section
+//        if (request.getProjects() != null && !request.getProjects().isEmpty()) {
+        List<Project> projects = request.getProjects().stream()
+                .map(req -> Project.builder()
+                        .name(req.getName())
+                        .description(req.getDescription())
+                        .technologies(req.getTechnologies())
+                        .projectUrl(req.getProjectUrl())
+                        .githubUrl(req.getGithubUrl())
+                        .startDate(req.getStartDate())
+                        .endDate(req.getEndDate())
+                        .current(req.isCurrent())
+                        .sortOrder(req.getSortOrder())
+                        .resume(resume)
+                        .build())
+                .toList();
+        resume.setProjects(new HashSet<>(projects));
+        log.debug("Mapped {} project entries", projects.size());
+//        }
+
+        // Map Skills section
+//        if (request.getSkills() != null && !request.getSkills().isEmpty()) {
+        List<Skill> skills = request.getSkills().stream()
+                .map(req -> Skill.builder()
+                        .name(req.getName())
+                        .category(req.getCategory())
+                        .proficiencyLevel(req.getProficiencyLevel())
+                        .yearsOfExperience(req.getYearsOfExperience())
+                        .description(req.getDescription())
+                        .sortOrder(req.getSortOrder())
+                        .resume(resume)
+                        .build())
+                .toList();
+        resume.setSkills(new HashSet<>(skills));
+        log.debug("Mapped {} skill entries", skills.size());
+//        }
+
+        // Map Sections (custom sections)
+//        if (request.getSections() != null && !request.getSections().isEmpty()) {
+        List<com.resumebuilder.entity.ResumeSection> sections = request.getSections().stream()
+                .map(req -> com.resumebuilder.entity.ResumeSection.builder()
+                        .sectionType(req.getSectionType())
+                        .sectionOrder(req.getSectionOrder())
+                        .title(req.getTitle())
+                        .content(req.getContent())
+                        .visible(req.isVisible())
+                        .resume(resume)
+                        .build())
+                .toList();
+        resume.setSections(new HashSet<>(sections));
+        log.debug("Mapped {} section entries", sections.size());
+//        }
+
+        Resume saved = resumeRepository.save(resume);
+        log.info("Resume created successfully with ID: {}", saved.getId());
+
+        return resumeMapper.toResumeResponse(saved);
     }
 
     @Override
@@ -78,10 +195,10 @@ public class ResumeServiceImpl implements ResumeService {
         UUID userId = getCurrentUserId();
         log.debug("Fetching resumes for user {} - page: {}, size: {}", userId, page, size);
 
-        Sort sort = sortDir.equalsIgnoreCase(AppConstants.DEFAULT_SORT_DIRECTION) 
-                ? Sort.by(sortBy).descending() 
+        Sort sort = sortDir.equalsIgnoreCase(AppConstants.DEFAULT_SORT_DIRECTION)
+                ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
-        
+
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<Resume> resumePage = resumeRepository.findByUserIdAndDeletedFalse(userId, pageable);
 
