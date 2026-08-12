@@ -28,6 +28,9 @@ public class Resume extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "candidate_name")
+    private String candidateName;
+
     @Column(name = "title", nullable = false)
     private String title;
 

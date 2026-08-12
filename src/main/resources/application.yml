@@ -55,6 +55,9 @@ app:
     access-token-expiration: ${jwt.access-token-expiration}
     refresh-token-expiration: ${jwt.refresh-token-expiration}
     issuer: resume-builder
+  gemini:
+    api-key: ${gemini.api-key}
+    model: gemini-3.5-flash
 
 springdoc:
   api-docs:

@@ -14,8 +14,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -78,5 +80,13 @@ public class ResumeController {
         return ResponseEntity.ok(ApiResponse.success("Resume deleted successfully"));
     }
 
-//    public Response
+    @PostMapping(value = "/parse-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Parse pdf file", description = "Parse pdf resume into json")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Resume parsed successfully")
+    public ResponseEntity<ApiResponse<ResumeResponse>> createResumeFromPdf(
+             @Parameter(description = "Resume pdf file") @RequestParam("file")MultipartFile file
+            ) {
+        ResumeResponse response = resumeService.createResumeFromPdf(file);
+        return ResponseEntity.ok(ApiResponse.success("Resume parsed successfully", response));
+    }
 }

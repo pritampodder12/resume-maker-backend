@@ -13,6 +13,8 @@ import com.resumebuilder.mapper.ResumeMapper;
 import com.resumebuilder.repository.ResumeRepository;
 import com.resumebuilder.repository.UserRepository;
 import com.resumebuilder.security.CustomUserDetails;
+import com.resumebuilder.service.AiResumeParseService;
+import com.resumebuilder.service.PdfExtractionService;
 import com.resumebuilder.service.ResumeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +41,8 @@ public class ResumeServiceImpl implements ResumeService {
     private final ResumeRepository resumeRepository;
     private final UserRepository userRepository;
     private final ResumeMapper resumeMapper;
+    private final PdfExtractionService pdfExtractionService;
+    private final AiResumeParseService aiResumeParseService;
 
     @Override
     @Transactional
@@ -50,6 +55,7 @@ public class ResumeServiceImpl implements ResumeService {
 
         Resume resume = Resume.builder()
                 .user(user)
+                .candidateName(request.getCandidateName())
                 .title(request.getTitle())
                 .objective(request.getObjective())
                 .templateName(request.getTemplateName())
@@ -267,5 +273,12 @@ public class ResumeServiceImpl implements ResumeService {
         }
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         return userDetails.getId();
+    }
+
+    public ResumeResponse createResumeFromPdf(MultipartFile file) {
+        String rawText = pdfExtractionService.extractText(file);
+        ResumeResponse parsedResume = aiResumeParseService.parseResume(rawText);
+        log.info("AI parsing successful, returning parsed data without saving");
+        return parsedResume;
     }
 }

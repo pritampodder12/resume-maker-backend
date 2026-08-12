@@ -25,6 +25,9 @@ public class CreateResumeRequest {
     @Schema(description = "Resume title", example = "Senior Software Engineer Resume", requiredMode = Schema.RequiredMode.REQUIRED)
     private String title;
 
+    @Schema(description = "Candidate Name of Resume", example = "John Doe")
+    private String candidateName;
+
     @Schema(description = "Resume objective or summary", example = "Experienced software engineer seeking challenging opportunities...")
     private String objective;
 

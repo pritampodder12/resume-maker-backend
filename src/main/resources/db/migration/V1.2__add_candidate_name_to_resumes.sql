@@ -1,0 +1,1 @@
+ALTER TABLE resumes ADD COLUMN candidate_name VARCHAR(255);
