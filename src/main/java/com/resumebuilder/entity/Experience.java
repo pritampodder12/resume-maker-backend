@@ -41,7 +41,7 @@ public class Experience extends BaseEntity {
     @Column(name = "employment_type")
     private String employmentType;
 
-    @Column(name = "start_date", nullable = false)
+    @Column(name = "start_date")
     private LocalDate startDate;
 
     @Column(name = "end_date")

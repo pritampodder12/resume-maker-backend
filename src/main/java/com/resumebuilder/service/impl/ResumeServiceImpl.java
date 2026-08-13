@@ -225,6 +225,10 @@ public class ResumeServiceImpl implements ResumeService {
         Resume resume = resumeRepository.findByIdAndUserIdAndDeletedFalse(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume", "id", id));
 
+        if (request.getCandidateName() != null) {
+            resume.setCandidateName(request.getCandidateName());
+        }
+
         if (request.getTitle() != null) {
             resume.setTitle(request.getTitle());
         }
@@ -246,10 +250,112 @@ public class ResumeServiceImpl implements ResumeService {
             resume.setActive(request.getActive());
         }
 
-        resume = resumeRepository.save(resume);
+        if (request.getEducation() != null) {
+            resume.getEducation().clear();
+            request.getEducation().forEach(req -> resume.getEducation().add(
+                    Education.builder()
+                            .institutionName(req.getInstitutionName())
+                            .degree(req.getDegree())
+                            .fieldOfStudy(req.getFieldOfStudy())
+                            .location(req.getLocation())
+                            .startDate(req.getStartDate())
+                            .endDate(req.getEndDate())
+                            .current(req.isCurrent())
+                            .gpa(req.getGpa())
+                            .description(req.getDescription())
+                            .sortOrder(req.getSortOrder())
+                            .resume(resume)
+                            .build()
+            ));
+        }
+
+        if (request.getExperience() != null) {
+            resume.getExperience().clear();
+            request.getExperience().forEach(req -> resume.getExperience().add(
+                    Experience.builder()
+                            .companyName(req.getCompanyName())
+                            .position(req.getPosition())
+                            .location(req.getLocation())
+                            .employmentType(req.getEmploymentType())
+                            .startDate(req.getStartDate())
+                            .endDate(req.getEndDate())
+                            .current(req.isCurrent())
+                            .description(req.getDescription())
+                            .highlights(req.getHighlights())
+                            .sortOrder(req.getSortOrder())
+                            .resume(resume)
+                            .build()
+            ));
+        }
+
+        if (request.getProjects() != null) {
+            resume.getProjects().clear();
+            request.getProjects().forEach(req -> resume.getProjects().add(
+                    Project.builder()
+                            .name(req.getName())
+                            .description(req.getDescription())
+                            .technologies(req.getTechnologies())
+                            .projectUrl(req.getProjectUrl())
+                            .githubUrl(req.getGithubUrl())
+                            .startDate(req.getStartDate())
+                            .endDate(req.getEndDate())
+                            .current(req.isCurrent())
+                            .sortOrder(req.getSortOrder())
+                            .resume(resume)
+                            .build()
+            ));
+        }
+
+        if (request.getSkills() != null) {
+            resume.getSkills().clear();
+            request.getSkills().forEach(req -> resume.getSkills().add(
+                    Skill.builder()
+                            .name(req.getName())
+                            .category(req.getCategory())
+                            .proficiencyLevel(req.getProficiencyLevel())
+                            .yearsOfExperience(req.getYearsOfExperience())
+                            .description(req.getDescription())
+                            .sortOrder(req.getSortOrder())
+                            .resume(resume)
+                            .build()
+            ));
+        }
+        if (request.getCertifications() != null) {
+            resume.getCertifications().clear();
+            request.getCertifications().forEach(req -> resume.getCertifications().add(
+                    Certification.builder()
+                            .name(req.getName())
+                            .issuingOrganization(req.getIssuingOrganization())
+                            .credentialId(req.getCredentialId())
+                            .credentialUrl(req.getCredentialUrl())
+                            .issueDate(req.getIssueDate())
+                            .expirationDate(req.getExpirationDate())
+                            .doesNotExpire(req.isDoesNotExpire())
+                            .description(req.getDescription())
+                            .sortOrder(req.getSortOrder())
+                            .resume(resume)
+                            .build()
+            ));
+        }
+
+        if (request.getSections() != null) {
+            resume.getSections().clear();
+            request.getSections().forEach(req -> resume.getSections().add(
+                    ResumeSection.builder()
+                            .sectionType(req.getSectionType())
+                            .sectionOrder(req.getSectionOrder())
+                            .title(req.getTitle())
+                            .content(req.getContent())
+                            .visible(req.isVisible())
+                            .resume(resume)
+                            .build()
+            ));
+        }
+
+        Resume savedResume = resumeRepository.save(resume);
         log.info("Resume updated successfully: {}", id);
 
-        return resumeMapper.toResumeResponse(resume);
+        return resumeMapper.toResumeResponse(savedResume);
     }
 
     @Override
