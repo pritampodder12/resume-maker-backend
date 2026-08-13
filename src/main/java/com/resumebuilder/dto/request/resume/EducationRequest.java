@@ -32,8 +32,7 @@ public class EducationRequest {
     @Schema(description = "Location of the institution", example = "Kolkata, India")
     private String location;
 
-    @NotNull(message = "Start date is required")
-    @Schema(description = "Start date of education", example = "2020-08-01", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Start date of education", example = "2020-08-01")
     private LocalDate startDate;
 
     @Schema(description = "End date (omit if currently studying)", example = "2024-06-01")

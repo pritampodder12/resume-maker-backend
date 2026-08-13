@@ -1,0 +1,2 @@
+ALTER TABLE certifications ALTER COLUMN issue_date DROP NOT NULL;
+ALTER TABLE education ALTER COLUMN start_date DROP NOT NULL;

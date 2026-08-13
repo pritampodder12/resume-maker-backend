@@ -41,7 +41,7 @@ public class Certification extends BaseEntity {
     @Column(name = "credential_url")
     private String credentialUrl;
 
-    @Column(name = "issue_date", nullable = false)
+    @Column(name = "issue_date")
     private LocalDate issueDate;
 
     @Column(name = "expiration_date")

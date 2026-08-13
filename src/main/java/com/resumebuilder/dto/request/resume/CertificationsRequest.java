@@ -32,8 +32,7 @@ public class CertificationsRequest {
     @Schema(description = "Credential URL (optional)", example = "https://www.credly.com/badges/123456")
     private String credentialUrl;
 
-    @NotNull(message = "Issue date is required")
-    @Schema(description = "Date when certification was issued", example = "2024-01-15", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Date when certification was issued", example = "2024-01-15")
     private LocalDate issueDate;
 
     @Schema(description = "Expiration date (omitted if doesNotExpire is true)", example = "2027-01-15")

@@ -261,8 +261,12 @@ public class ResumeServiceImpl implements ResumeService {
         Resume resume = resumeRepository.findByIdAndUserIdAndDeletedFalse(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume", "id", id));
 
-        resume.setDeleted(true);
-        resumeRepository.save(resume);
+//        For Soft Delete
+//        resume.setDeleted(true);
+//        resumeRepository.save(resume);
+
+        resumeRepository.delete(resume);
+
         log.info("Resume soft deleted successfully: {}", id);
     }
 
