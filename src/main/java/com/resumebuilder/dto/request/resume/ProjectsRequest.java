@@ -34,10 +34,10 @@ public class ProjectsRequest {
     private String githubUrl;
 
     @Schema(description = "Start date", example = "2022-06-01")
-    private LocalDate startDate;
+    private String startDate;
 
     @Schema(description = "End date (omitted if still in progress)", example = "2023-12-31")
-    private LocalDate endDate;
+    private String endDate;
 
     @Schema(description = "Currently working on this project", example = "false")
     private boolean current;

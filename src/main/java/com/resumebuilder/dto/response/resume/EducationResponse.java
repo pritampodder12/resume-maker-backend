@@ -19,8 +19,8 @@ public class EducationResponse {
     private String degree;
     private String fieldOfStudy;
     private String location;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private String startDate;
+    private String endDate;
     private boolean current;
     private String gpa;
     private List<String> description;

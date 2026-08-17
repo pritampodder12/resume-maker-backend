@@ -33,10 +33,10 @@ public class EducationRequest {
     private String location;
 
     @Schema(description = "Start date of education", example = "2020-08-01")
-    private LocalDate startDate;
+    private String startDate;
 
     @Schema(description = "End date (omit if currently studying)", example = "2024-06-01")
-    private LocalDate endDate;
+    private String endDate;
 
     @Schema(description = "Currently studying at this institution", example = "true")
     private boolean current;

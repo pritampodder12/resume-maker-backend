@@ -32,10 +32,10 @@ public class ExperienceRequest {
     private String employmentType;
 
     @Schema(description = "Start date", example = "2022-01-01")
-    private LocalDate startDate;
+    private String startDate;
 
     @Schema(description = "End date (omit if current)", example = "2024-06-01")
-    private LocalDate endDate;
+    private String endDate;
 
     @Schema(description = "Currently working here", example = "false")
     private boolean current;

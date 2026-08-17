@@ -46,10 +46,10 @@ public class Project extends BaseEntity {
     private String githubUrl;
 
     @Column(name = "start_date")
-    private LocalDate startDate;
+    private String startDate;
 
     @Column(name = "end_date")
-    private LocalDate endDate;
+    private String endDate;
 
     @Column(name = "is_current", nullable = false)
     @Builder.Default

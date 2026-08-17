@@ -19,8 +19,8 @@ public class CertificationsResponse {
     private String issuingOrganization;
     private String credentialId;
     private String credentialUrl;
-    private LocalDate issueDate;
-    private LocalDate expirationDate;
+    private String issueDate;
+    private String expirationDate;
     private boolean doesNotExpire = false;
     private List<String> description;
     private Integer sortOrder = 0;

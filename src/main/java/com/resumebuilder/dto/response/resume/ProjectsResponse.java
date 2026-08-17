@@ -21,8 +21,8 @@ public class ProjectsResponse {
     private String technologies;
     private String projectUrl;
     private String githubUrl;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private String startDate;
+    private String endDate;
     private boolean current;
     private Integer sortOrder;
 }

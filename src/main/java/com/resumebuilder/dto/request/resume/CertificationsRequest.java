@@ -33,10 +33,10 @@ public class CertificationsRequest {
     private String credentialUrl;
 
     @Schema(description = "Date when certification was issued", example = "2024-01-15")
-    private LocalDate issueDate;
+    private String issueDate;
 
     @Schema(description = "Expiration date (omitted if doesNotExpire is true)", example = "2027-01-15")
-    private LocalDate expirationDate;
+    private String expirationDate;
 
     @Schema(description = "Does this certification expire?", example = "false")
     private boolean doesNotExpire;

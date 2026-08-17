@@ -58,6 +58,14 @@ app:
   gemini:
     api-key: ${gemini.api-key}
     model: gemini-3.5-flash
+  bedrock:
+#    model-id: openai.gpt-oss-20b-1:0
+#    model-id: openai.gpt-oss-safeguard-20b ---not working
+    model-id: google.gemma-3-12b-it
+#    model-id: nvidia.nemotron-nano-9b-v2
+#    model-id: deepseek.v3.2
+#    model-id: apac.amazon.nova-lite-v1:0
+#    model-id: google.gemma-3-4b-it
 
 springdoc:
   api-docs:
