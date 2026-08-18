@@ -11,6 +11,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.*;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +28,8 @@ public class AiResumeParseService {
     private final ObjectMapper objectMapper;
     private final Map<Integer, ResumeResponse> devCache = new ConcurrentHashMap<>();
 
+    private static final Path CACHE_DIR = Paths.get("dev-cache/resume-parse");
+
     @Value("${app.bedrock.model-id}")
     private String modelId;
 
@@ -34,89 +40,59 @@ public class AiResumeParseService {
     private String model;
 
     private static final String SYSTEM_PROMPT = """
-            You are a resume parser. Given raw resume text, extract the information and
-            return ONLY valid JSON (no markdown fences, no explanation) matching this exact structure:
-            
-            {
-              "title": "string (required, e.g. 'Software Engineer Resume', Only position/designation)",
-              "candidateName": "string — the full name of the person this resume belongs to, e.g. 'Pritam Podder'",
-              "objective": "string",
-              "templateName": "modern",
-              "education": [{"degree": "string", "institutionName": "string", "fieldOfStudy": "string",
-                             "location": "string", "startDate": "string", "endDate": "string",
-                             "current": boolean, "gpa": "string", "description": ["string"], "sortOrder": number}],
-              "experience": [{"companyName": "string", "position": "string", "location": "string",
-                              "employmentType": "string", "startDate": "string", "endDate": "string",
-                              "current": boolean, "description": ["string"], "highlights": "string", "sortOrder": number}],
-              "projects": [{"name": "string", "description": ["string"], "technologies": "string",
-                            "projectUrl": "string", "githubUrl": "string",
-                            "startDate": "string", "endDate": "string",
-                            "current": boolean, "sortOrder": number}],
-              "skills": [{"name": "string", "category": "string", "proficiencyLevel": number 0-100,
-                         "yearsOfExperience": number, "description": [], "sortOrder": number}],
-              "certifications": [{"name": "string", "issuingOrganization": "string", "issueDate": "string",
-                                  "expirationDate": "string", "doesNotExpire": boolean,
-                                  "credentialId": "string", "credentialUrl": "string",
-                                  "description": [], "sortOrder": number}]
-            }
-            
-            CRITICAL RULE FOR MISSING DATA:
-            If a field's value cannot be found in the resume text, DO NOT include that key in the JSON output at all.
-            Do NOT write the word "omit", "null", "N/A", "", or any placeholder text as a value.
-            Simply leave the key out of the JSON object entirely.
-            
-            Example — if expirationDate is not found, write:
-            {"name": "AWS Certified", "issuingOrganization": "AWS", "issueDate": "2024-01-01"}
-            NOT:
-            {"name": "AWS Certified", "issuingOrganization": "AWS", "issueDate": "2024-01-01", "expirationDate": "omit"}
-            
-            RULE FOR DATE FIELDS (startDate, endDate, issueDate, expirationDate):
-            These fields are plain strings, not strict dates, so follow this logic:
-            
-            1. If a real calendar date is given (e.g. "Jan 2023", "2023", "03/2023"):
-               - Convert it to "YYYY-MM-DD" format
-               - If a date has only a year, use YYYY-01-01
-            
-            2. If the resume text says the entry is ongoing, using any of these words or an obvious equivalent
-               ("Present", "Current", "Ongoing", "Till Date", "Till Now", "Now", "Continuing"):
-               - For endDate/expirationDate specifically: write the literal string "Present"
-               - Set "current": true (for endDate only, not expirationDate)
-            
-            3. If the field is not mentioned at all in the resume (truly blank):
-               - DO NOT include that key at all
-            
-            Worked examples:
-            - Text: "Software Engineer, Jan 2022 - Present"
-              -> {"startDate": "2022-01-01", "endDate": "Present", "current": true}
-            - Text: "Analyst, 2019 - 2021"
-              -> {"startDate": "2019-01-01", "endDate": "2021-01-01", "current": false}
-            - Text: "Intern, Summer 2020" (no end date given at all)
-              -> {"startDate": "2020-01-01", "current": false}   (no endDate key)
-            - Text: "AWS Certified, issued Jan 2024, does not expire"
-              -> {"issueDate": "2024-01-01", "doesNotExpire": true}   (no expirationDate key)
-            
-            Other rules:
-            - "current" is true ONLY if the resume explicitly says "Present"/"Current"/"Ongoing"/"Till Date"/
-              "Till Now"/"Now"/"Continuing" (or an obvious equivalent) for that entry's end date
-            - When "current" is true, endDate MUST be the literal string "Present" — never leave it blank
-              and never invent a real date
-            - Preserve original wording for descriptions/bullet points, do not paraphrase
-            - sortOrder starts at 1 and increments within each section
+          You are a resume parser. Given raw resume text, extract the information and
+          return ONLY valid JSON (no markdown fences, no explanation) matching this exact structure:
+
+          {
+            "title": "string (required, e.g. 'Software Engineer Resume', Only position/designation)",
+            "candidateName": "string — the full name of the person this resume belongs to, e.g. 'Pritam Podder'",
+            "objective": "string or omit",
+            "templateName": "modern",
+            "education": [{"degree": "string", "institutionName": "string", "fieldOfStudy": "string",
+                           "location": "string", "startDate": "YYYY-MM-DD or omit", "endDate": "YYYY-MM-DD or omit",
+                           "current": boolean, "gpa": "string or omit", "description": ["string"], "sortOrder": number}],
+            "experience": [{"companyName": "string", "position": "string", "location": "string",
+                            "employmentType": "string", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD or omit",
+                            "current": boolean, "description": ["string"], "highlights": "string", "sortOrder": number}],
+            "projects": [{"name": "string", "description": ["string"], "technologies": "string",
+                          "projectUrl": "string or omit", "githubUrl": "string or omit",
+                          "startDate": "YYYY-MM-DD or omit", "endDate": "YYYY-MM-DD or omit",
+                          "current": boolean, "sortOrder": number}],
+            "skills": [{"name": "string", "category": "string", "proficiencyLevel": number 0-100,
+                       "yearsOfExperience": number, "description": [], "sortOrder": number}],
+            "certifications": [{"name": "string", "issuingOrganization": "string", "issueDate": "YYYY-MM-DD",
+                                "expirationDate": "YYYY-MM-DD or omit", "doesNotExpire": boolean,
+                                "credentialId": "string or omit", "credentialUrl": "string or omit",
+                                "description": [], "sortOrder": number}]
+          }
+
+          Rules:
+          - If a date has only a year, use YYYY-01-01
+          - "current" is true only if the resume explicitly says "Present" or equivalent
+          - Omit fields you cannot find rather than guessing or inventing data
             """;
 
     public ResumeResponse parseResume(String rawText) {
 
         int key = rawText.hashCode();
 
-        if(devCache.containsKey(key)) {
-            log.info("Returning cached resume parse result (dev mode)");
-            return devCache.get(key);
+//        if (devCache.containsKey(key)) {
+//            log.info("Returning cached resume parse result (dev mode)");
+//            return devCache.get(key);
+//        }
+//      String aiResponse = callGeminiApi(rawText);
+
+        ResumeResponse cached = readFromDiskCache(key);
+        if(cached != null) {
+            log.info("Returning cached resume parse result (dev mode, disk)");
+            return cached;
         }
 
-//      String aiResponse = callGeminiApi(rawText);
+
         String aiResponse = callBedrockApi(rawText);
         ResumeResponse result = deserialize(aiResponse);
-        devCache.put(key, result);
+//        devCache.put(key, result);
+        writeToDisk(key, result);
 
         return result;
     }
@@ -174,7 +150,7 @@ public class AiResumeParseService {
 
             List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
 
-            if(candidates == null || candidates.isEmpty()) {
+            if (candidates == null || candidates.isEmpty()) {
                 throw new BadRequestException("AI did not return any content. Please try again.");
             }
 
@@ -195,6 +171,27 @@ public class AiResumeParseService {
         } catch (Exception e) {
             log.error("Failed to deserialize AI response into CreateResumeRequest. Raw response: {}", cleaned, e);
             throw new BadRequestException("AI returned an unexpected format. Please try again or enter details manually.");
+        }
+    }
+
+    private ResumeResponse readFromDiskCache(int key) {
+        try {
+            Path file = CACHE_DIR.resolve(key + ".json");
+            if(!Files.exists(file)) return null;
+            return objectMapper.readValue(file.toFile(), ResumeResponse.class);
+        } catch (Exception e) {
+            log.warn("Failed to read dev cache file for key {}", key, e);
+            return null;
+        }
+    }
+
+    private void writeToDisk(int key, ResumeResponse result) {
+        try {
+            Files.createDirectories(CACHE_DIR);
+            Path file = CACHE_DIR.resolve(key + ".json");
+            objectMapper.writeValue(file.toFile(), result);
+        } catch (Exception e) {
+            log.warn("Failed to write dev cache file for key {}", key, e);
         }
     }
 }
