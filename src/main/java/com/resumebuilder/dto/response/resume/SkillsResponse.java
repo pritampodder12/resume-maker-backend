@@ -15,7 +15,6 @@ import java.util.List;
 @Schema(description = "Skills data")
 public class SkillsResponse {
     private String name;
-    private String category;
     private Integer proficiencyLevel;
     private Integer yearsOfExperience;
     private List<String> description;
