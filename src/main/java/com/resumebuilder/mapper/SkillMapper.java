@@ -17,10 +17,11 @@ public interface SkillMapper {
             return Map.of();
         }
         return skills.stream()
-                .sorted(Comparator.comparing(Skill::getCategory, Comparator.nullsLast(Comparator.naturalOrder()))
+                .sorted(Comparator.comparing(
+                                (Skill s) -> s.getCategory() != null ? s.getCategory() : "Uncategorized")
                         .thenComparing(Skill::getSortOrder, Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.groupingBy(
-                        Skill::getCategory,
+                        s -> s.getCategory() != null ? s.getCategory() : "Uncategorized",
                         LinkedHashMap::new,
                         Collectors.mapping(this::toResponse, Collectors.toList())
                 ));
