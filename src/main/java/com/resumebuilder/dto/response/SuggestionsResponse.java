@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class SuggestionResponse {
+public class SuggestionsResponse {
 
     private List<Suggestion> suggestions;
 

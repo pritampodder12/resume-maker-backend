@@ -1,7 +1,10 @@
 package com.resumebuilder.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.resumebuilder.constant.AiPrompts;
+import com.resumebuilder.dto.response.AtsAnalysisResponse;
 import com.resumebuilder.dto.response.ResumeResponse;
+import com.resumebuilder.dto.response.SuggestionsResponse;
 import com.resumebuilder.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +14,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.*;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,9 +28,10 @@ public class AiResumeParseService {
     private final WebClient geminiWebClient;
     public final BedrockRuntimeClient bedrockRuntimeClient;
     private final ObjectMapper objectMapper;
-    private final Map<Integer, ResumeResponse> devCache = new ConcurrentHashMap<>();
 
     private static final Path CACHE_DIR = Paths.get("dev-cache/resume-parse");
+    private static final Path ATS_CACHE_DIR = Paths.get("dev-cache/ats-analysis");
+    private static final Path SUGGESTIONS_CACHE_DIR = Paths.get("dev-cache/suggestions");
 
     @Value("${app.bedrock.model-id}")
     private String modelId;
@@ -39,72 +42,109 @@ public class AiResumeParseService {
     @Value("${app.gemini.model}")
     private String model;
 
-    private static final String SYSTEM_PROMPT = """
-          You are a resume parser. Given raw resume text, extract the information and
-          return ONLY valid JSON (no markdown fences, no explanation) matching this exact structure:
-
-          {
-            "title": "string (required, e.g. 'Software Engineer Resume', Only position/designation)",
-            "candidateName": "string — the full name of the person this resume belongs to, e.g. 'Pritam Podder'",
-            "objective": "string or omit",
-            "templateName": "modern",
-            "education": [{"degree": "string", "institutionName": "string", "fieldOfStudy": "string",
-                           "location": "string", "startDate": "YYYY-MM-DD or omit", "endDate": "YYYY-MM-DD or omit",
-                           "current": boolean, "gpa": "string or omit", "description": ["string"], "sortOrder": number}],
-            "experience": [{"companyName": "string", "position": "string", "location": "string",
-                            "employmentType": "string", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD or omit",
-                            "current": boolean, "description": ["string"], "highlights": "string", "sortOrder": number}],
-            "projects": [{"name": "string", "description": ["string"], "technologies": "string",
-                          "projectUrl": "string or omit", "githubUrl": "string or omit",
-                          "startDate": "YYYY-MM-DD or omit", "endDate": "YYYY-MM-DD or omit",
-                          "current": boolean, "sortOrder": number}],
-            "skills": [{"name": "string", "category": "string", "proficiencyLevel": number 0-100,
-                       "yearsOfExperience": number, "description": [], "sortOrder": number}],
-            "certifications": [{"name": "string", "issuingOrganization": "string", "issueDate": "YYYY-MM-DD",
-                                "expirationDate": "YYYY-MM-DD or omit", "doesNotExpire": boolean,
-                                "credentialId": "string or omit", "credentialUrl": "string or omit",
-                                "description": [], "sortOrder": number}]
-          }
-
-          Rules:
-          - If a date has only a year, use YYYY-01-01
-          - "current" is true only if the resume explicitly says "Present" or equivalent
-          - Omit fields you cannot find rather than guessing or inventing data
-            """;
-
     public ResumeResponse parseResume(String rawText) {
 
         int key = rawText.hashCode();
 
-//        if (devCache.containsKey(key)) {
-//            log.info("Returning cached resume parse result (dev mode)");
-//            return devCache.get(key);
-//        }
-//      String aiResponse = callGeminiApi(rawText);
-
-        ResumeResponse cached = readFromDiskCache(key);
+        ResumeResponse cached = readFromDiskCache(CACHE_DIR, key, ResumeResponse.class);
         if(cached != null) {
             log.info("Returning cached resume parse result (dev mode, disk)");
             return cached;
         }
 
-
-        String aiResponse = callBedrockApi(rawText);
-        ResumeResponse result = deserialize(aiResponse);
-//        devCache.put(key, result);
-        writeToDisk(key, result);
+        String aiResponse = callBedrockApi(AiPrompts.PARSE_RESUME_PROMPT, rawText);
+        ResumeResponse result = deserialize(aiResponse, ResumeResponse.class);
+        writeToDisk(CACHE_DIR, key, result);
 
         return result;
     }
 
-    private String callBedrockApi(String rawText) {
+    public AtsAnalysisResponse analyseJobMatch(ResumeResponse resume, String jobDescription) {
+        String userContent = buildAnalysisUserContent(resume, jobDescription);
+        int key = userContent.hashCode();
+
+        AtsAnalysisResponse cached = readFromDiskCache(ATS_CACHE_DIR, key, AtsAnalysisResponse.class);
+        if(cached != null) {
+            log.info("Returning cached ATS analysis parse result (dev mode, disk)");
+            return cached;
+        }
+
+        String aiResponse = callBedrockApi(AiPrompts.ATS_ANALYSIS_SYSTEM_PROMPT, userContent);
+        AtsAnalysisResponse result = deserialize(aiResponse, AtsAnalysisResponse.class);
+        writeToDisk(ATS_CACHE_DIR, key, result);
+
+        return result;
+    }
+
+    private String buildAnalysisUserContent(ResumeResponse resume, String jobDescription) {
+        try {
+            return """
+                    RESUME:
+                    %s
+                    
+                    JOB DESCRIPTION:
+                    %S
+                    """.formatted(objectMapper.writeValueAsString(resume), jobDescription);
+        } catch (Exception e) {
+            log.error("Failed to serialize resume for ATS analysis", e);
+            throw new BadRequestException("Could not process resume for analysis.");
+        }
+    }
+
+    public SuggestionsResponse generateSuggestions(Object sectionData,
+                                                   String section,
+                                                   String jobDescription,
+                                                   List<String> missingKeywords) {
+        String userContent = buildSuggestionsUserContent(sectionData, section, jobDescription, missingKeywords);
+        int key = userContent.hashCode();
+
+        SuggestionsResponse cached = readFromDiskCache(SUGGESTIONS_CACHE_DIR, key, SuggestionsResponse.class);
+        if (cached != null) {
+            log.info("Returning cached suggestions result (dev mode, disk)");
+            return cached;
+        }
+
+        String aiResponse = callBedrockApi(AiPrompts.SUGGESTIONS_SYSTEM_PROMPT, userContent);
+        SuggestionsResponse result = deserialize(aiResponse, SuggestionsResponse.class);
+        writeToDisk(SUGGESTIONS_CACHE_DIR, key, result);
+
+        return result;
+    }
+
+    private String buildSuggestionsUserContent(Object sectionData,
+                                               String section,
+                                               String jobDescription,
+                                               List<String> missingKeywords) {
+        try {
+            return """
+                    RESUME SECTION (%s):
+                    %s
+ 
+                    JOB DESCRIPTION:
+                    %s
+ 
+                    MISSING KEYWORDS:
+                    %s
+                    """.formatted(
+                    section,
+                    objectMapper.writeValueAsString(sectionData),
+                    jobDescription,
+                    objectMapper.writeValueAsString(missingKeywords)
+            );
+        } catch (Exception e) {
+            log.error("Failed to serialize section data for suggestions", e);
+            throw new BadRequestException("Could not process resume section for suggestions.");
+        }
+    }
+
+    private String callBedrockApi(String systemPrompt, String userContent) {
         try {
             ConverseRequest request = ConverseRequest.builder()
                     .modelId(modelId)
-                    .system(SystemContentBlock.builder().text(SYSTEM_PROMPT).build())
+                    .system(SystemContentBlock.builder().text(systemPrompt).build())
                     .messages(Message.builder()
                             .role(ConversationRole.USER)
-                            .content(ContentBlock.fromText(rawText))
+                            .content(ContentBlock.fromText(userContent))
                             .build())
                     .inferenceConfig(InferenceConfiguration.builder()
                             .temperature(0.2f)
@@ -117,7 +157,7 @@ public class AiResumeParseService {
             return response.output().message().content().get(0).text();
         } catch (BedrockRuntimeException e) {
             log.error("Bedrock API call failed", e);
-            throw new BadRequestException("Failed to parse resume using AI. Please try again.");
+            throw new BadRequestException("Failed to process request using AI. Please try again.");
         }
     }
 
@@ -126,7 +166,7 @@ public class AiResumeParseService {
 
         Map<String, Object> requestBody = Map.of(
                 "system_instruction", Map.of(
-                        "parts", List.of(Map.of("text", SYSTEM_PROMPT))
+                        "parts", List.of(Map.of("text", AiPrompts.PARSE_RESUME_PROMPT))
                 ),
                 "contents", List.of(
                         Map.of("role", "user", "parts", List.of(Map.of("text", rawText)))
@@ -164,28 +204,28 @@ public class AiResumeParseService {
         }
     }
 
-    private ResumeResponse deserialize(String aiResponse) {
+    private <T> T deserialize(String aiResponse, Class<T> clazz) {
         String cleaned = aiResponse.replaceAll("```json|```", "").trim();
         try {
-            return objectMapper.readValue(cleaned, ResumeResponse.class);
+            return objectMapper.readValue(cleaned, clazz);
         } catch (Exception e) {
-            log.error("Failed to deserialize AI response into CreateResumeRequest. Raw response: {}", cleaned, e);
+            log.error("Failed to deserialize AI response into CreateResumeRequest. Raw response: {}", clazz.getSimpleName(), e);
             throw new BadRequestException("AI returned an unexpected format. Please try again or enter details manually.");
         }
     }
 
-    private ResumeResponse readFromDiskCache(int key) {
+    private <T> T readFromDiskCache(Path cacheDir, int key, Class<T> clazz) {
         try {
-            Path file = CACHE_DIR.resolve(key + ".json");
+            Path file = cacheDir.resolve(key + ".json");
             if(!Files.exists(file)) return null;
-            return objectMapper.readValue(file.toFile(), ResumeResponse.class);
+            return objectMapper.readValue(file.toFile(), clazz);
         } catch (Exception e) {
             log.warn("Failed to read dev cache file for key {}", key, e);
             return null;
         }
     }
 
-    private void writeToDisk(int key, ResumeResponse result) {
+    private void writeToDisk(Path cacheDir, int key, Object result) {
         try {
             Files.createDirectories(CACHE_DIR);
             Path file = CACHE_DIR.resolve(key + ".json");
