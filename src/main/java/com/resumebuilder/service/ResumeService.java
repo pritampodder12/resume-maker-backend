@@ -2,6 +2,7 @@ package com.resumebuilder.service;
 
 import com.resumebuilder.dto.request.CreateResumeRequest;
 import com.resumebuilder.dto.request.UpdateResumeRequest;
+import com.resumebuilder.dto.response.AtsAnalysisResponse;
 import com.resumebuilder.dto.response.PagedResponse;
 import com.resumebuilder.dto.response.ResumeResponse;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,4 +22,6 @@ public interface ResumeService {
     void deleteResume(UUID id);
 
     ResumeResponse createResumeFromPdf(MultipartFile file);
+
+    AtsAnalysisResponse analyseResume(UUID id, String jobDescription);
 }

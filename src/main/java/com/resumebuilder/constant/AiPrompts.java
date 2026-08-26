@@ -24,8 +24,12 @@ public final class AiPrompts {
                           "projectUrl": "string or omit", "githubUrl": "string or omit",
                           "startDate": "YYYY-MM-DD or omit", "endDate": "YYYY-MM-DD or omit",
                           "current": boolean, "sortOrder": number}],
-            "skills": [{"name": "string", "category": "string", "proficiencyLevel": number 0-100,
-                       "yearsOfExperience": number, "description": [], "sortOrder": number}],
+            "skills": {
+              "<category name, e.g. 'Programming Languages', 'Frameworks', 'Tools'>": [
+                {"name": "string", "proficiencyLevel": number 0-100, "yearsOfExperience": number,
+                 "description": [], "sortOrder": number}
+              ]
+            },
             "certifications": [{"name": "string", "issuingOrganization": "string", "issueDate": "YYYY-MM-DD",
                                 "expirationDate": "YYYY-MM-DD or omit", "doesNotExpire": boolean,
                                 "credentialId": "string or omit", "credentialUrl": "string or omit",
@@ -36,6 +40,9 @@ public final class AiPrompts {
           - If a date has only a year, use YYYY-01-01
           - "current" is true only if the resume explicitly says "Present" or equivalent
           - Omit fields you cannot find rather than guessing or inventing data
+          - Group skills under the category name used in the resume (e.g. "Languages", "Frameworks",
+            "Tools", "Databases"). If the resume doesn't label categories, infer 2-5 sensible groups
+            from context rather than putting everything under one key
             """;
 
     public static final String ATS_ANALYSIS_SYSTEM_PROMPT = """

@@ -19,12 +19,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AiResumeParseService {
+public class AiResumeService {
     private final WebClient geminiWebClient;
     public final BedrockRuntimeClient bedrockRuntimeClient;
     private final ObjectMapper objectMapper;
@@ -227,8 +226,8 @@ public class AiResumeParseService {
 
     private void writeToDisk(Path cacheDir, int key, Object result) {
         try {
-            Files.createDirectories(CACHE_DIR);
-            Path file = CACHE_DIR.resolve(key + ".json");
+            Files.createDirectories(cacheDir);
+            Path file = cacheDir.resolve(key + ".json");
             objectMapper.writeValue(file.toFile(), result);
         } catch (Exception e) {
             log.warn("Failed to write dev cache file for key {}", key, e);

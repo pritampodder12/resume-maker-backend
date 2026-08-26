@@ -1,9 +1,11 @@
 package com.resumebuilder.controller;
 
 import com.resumebuilder.constant.AppConstants;
+import com.resumebuilder.dto.request.AtsAnalysisRequest;
 import com.resumebuilder.dto.request.CreateResumeRequest;
 import com.resumebuilder.dto.request.UpdateResumeRequest;
 import com.resumebuilder.dto.response.ApiResponse;
+import com.resumebuilder.dto.response.AtsAnalysisResponse;
 import com.resumebuilder.dto.response.PagedResponse;
 import com.resumebuilder.dto.response.ResumeResponse;
 import com.resumebuilder.service.ResumeService;
@@ -84,9 +86,18 @@ public class ResumeController {
     @Operation(summary = "Parse pdf file", description = "Parse pdf resume into json")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Resume parsed successfully")
     public ResponseEntity<ApiResponse<ResumeResponse>> createResumeFromPdf(
-             @Parameter(description = "Resume pdf file") @RequestParam("file")MultipartFile file
-            ) {
+            @Parameter(description = "Resume pdf file") @RequestParam("file") MultipartFile file
+    ) {
         ResumeResponse response = resumeService.createResumeFromPdf(file);
         return ResponseEntity.ok(ApiResponse.success("Resume parsed successfully", response));
+    }
+
+    @PostMapping("/{id}/ats-analysis")
+    @Operation(summary = "Get Resume ATS score", description = "ATS score correspond to a job description")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Resume Analysis successful")
+    public ResponseEntity<ApiResponse<AtsAnalysisResponse>> atsAnalysisFromJD(
+            @Valid @RequestBody AtsAnalysisRequest request,
+            @Parameter(description = "Resume ID") @PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success("ATS analysis successful", resumeService.analyseResume(id, request.getJobDescription())));
     }
 }

@@ -3,17 +3,17 @@ package com.resumebuilder.service.impl;
 import com.resumebuilder.constant.AppConstants;
 import com.resumebuilder.dto.request.CreateResumeRequest;
 import com.resumebuilder.dto.request.UpdateResumeRequest;
+import com.resumebuilder.dto.response.AtsAnalysisResponse;
 import com.resumebuilder.dto.response.PagedResponse;
 import com.resumebuilder.dto.response.ResumeResponse;
 import com.resumebuilder.entity.*;
-import com.resumebuilder.exception.BadRequestException;
 import com.resumebuilder.exception.ResourceNotFoundException;
 import com.resumebuilder.exception.UnauthorizedException;
 import com.resumebuilder.mapper.ResumeMapper;
 import com.resumebuilder.repository.ResumeRepository;
 import com.resumebuilder.repository.UserRepository;
 import com.resumebuilder.security.CustomUserDetails;
-import com.resumebuilder.service.AiResumeParseService;
+import com.resumebuilder.service.AiResumeService;
 import com.resumebuilder.service.PdfExtractionService;
 import com.resumebuilder.service.ResumeService;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +41,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final UserRepository userRepository;
     private final ResumeMapper resumeMapper;
     private final PdfExtractionService pdfExtractionService;
-    private final AiResumeParseService aiResumeParseService;
+    private final AiResumeService aiResumeService;
 
     @Override
     @Transactional
@@ -387,8 +386,20 @@ public class ResumeServiceImpl implements ResumeService {
 
     public ResumeResponse createResumeFromPdf(MultipartFile file) {
         String rawText = pdfExtractionService.extractText(file);
-        ResumeResponse parsedResume = aiResumeParseService.parseResume(rawText);
+        ResumeResponse parsedResume = aiResumeService.parseResume(rawText);
         log.info("AI parsing successful, returning parsed data without saving");
         return parsedResume;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AtsAnalysisResponse analyseResume(UUID id, String jobDescription) {
+        UUID userId = getCurrentUserId();
+
+        Resume resume = resumeRepository.findByIdAndUserIdAndDeletedFalse(id, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resume", "id", id));
+
+        return aiResumeService.analyseJobMatch(resumeMapper.toResumeResponse(resume), jobDescription);
+    }
+
 }
