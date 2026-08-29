@@ -1,20 +1,24 @@
 package com.resumebuilder.dto.response;
 
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AtsAnalysisResponse {
 
+    private UUID analysisId;
     private AtsScore atsScore;
     private List<KeywordMatch> extractedKeywords;
 
     @Data
-    private static class AtsScore {
+    public static class AtsScore {
         private int overall;
         private int keyword;
         private int formatting;

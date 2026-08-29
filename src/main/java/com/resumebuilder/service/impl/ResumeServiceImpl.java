@@ -10,6 +10,7 @@ import com.resumebuilder.entity.*;
 import com.resumebuilder.exception.ResourceNotFoundException;
 import com.resumebuilder.exception.UnauthorizedException;
 import com.resumebuilder.mapper.ResumeMapper;
+import com.resumebuilder.repository.AtsAnalyseRepository;
 import com.resumebuilder.repository.ResumeRepository;
 import com.resumebuilder.repository.UserRepository;
 import com.resumebuilder.security.CustomUserDetails;
@@ -39,6 +40,7 @@ public class ResumeServiceImpl implements ResumeService {
 
     private final ResumeRepository resumeRepository;
     private final UserRepository userRepository;
+    private final AtsAnalyseRepository atsAnalyseRepository;
     private final ResumeMapper resumeMapper;
     private final PdfExtractionService pdfExtractionService;
     private final AiResumeService aiResumeService;
@@ -399,7 +401,32 @@ public class ResumeServiceImpl implements ResumeService {
         Resume resume = resumeRepository.findByIdAndUserIdAndDeletedFalse(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume", "id", id));
 
-        return aiResumeService.analyseJobMatch(resumeMapper.toResumeResponse(resume), jobDescription);
+        AtsAnalysisResponse response = aiResumeService.analyseJobMatch(resumeMapper.toResumeResponse(resume), jobDescription);
+
+        AtsAnalysis atsAnalysis = AtsAnalysis.builder()
+                .resume(resume)
+                .jobDescription(jobDescription)
+                .overallScore(response.getAtsScore().getOverall())
+                .keywordsScore(response.getAtsScore().getKeyword())
+                .formattingScore(response.getAtsScore().getFormatting())
+                .impactScore(response.getAtsScore().getImpact())
+                .build();
+
+        List<AtsAnalysisKeyword> atsAnalysisKeywords = response.getExtractedKeywords().stream()
+                .map(keywordData -> AtsAnalysisKeyword.builder()
+                        .keyword(keywordData.getKeyword())
+                        .matched(keywordData.isMatched())
+                        .atsAnalysis(atsAnalysis)
+                        .build())
+                .toList();
+        atsAnalysis.setKeywords(new HashSet<>(atsAnalysisKeywords));
+        log.debug("Mapped {} ats analysis keyword entries", atsAnalysisKeywords.size());
+
+        AtsAnalysis saved = atsAnalyseRepository.save(atsAnalysis);
+        log.info("Ats Analysis Data created with ID: {}", saved.getId());
+
+        response.setAnalysisId(saved.getId());
+        return response;
     }
 
 }
