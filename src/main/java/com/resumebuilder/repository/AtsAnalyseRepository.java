@@ -14,6 +14,8 @@ public interface AtsAnalyseRepository extends JpaRepository<AtsAnalysis, UUID> {
 
     Optional<AtsAnalysis> findByIdAndResumeId(UUID id, UUID resumeId);
 
+    Optional<AtsAnalysis> findFirstByResumeIdAndJobDescriptionOrderByCreatedAtDesc(UUID id, String jobDescription);
+
     @Query("SELECT a FROM AtsAnalysis a LEFT JOIN FETCH a.keywords WHERE a.id = :id")
     Optional<AtsAnalysis> findByIdWithKeyword(@Param("id") UUID id);
 }

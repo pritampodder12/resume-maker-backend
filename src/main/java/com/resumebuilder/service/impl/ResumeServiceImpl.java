@@ -9,6 +9,7 @@ import com.resumebuilder.dto.response.ResumeResponse;
 import com.resumebuilder.entity.*;
 import com.resumebuilder.exception.ResourceNotFoundException;
 import com.resumebuilder.exception.UnauthorizedException;
+import com.resumebuilder.mapper.AtsAnalysisMapper;
 import com.resumebuilder.mapper.ResumeMapper;
 import com.resumebuilder.repository.AtsAnalyseRepository;
 import com.resumebuilder.repository.ResumeRepository;
@@ -31,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -42,6 +44,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final UserRepository userRepository;
     private final AtsAnalyseRepository atsAnalyseRepository;
     private final ResumeMapper resumeMapper;
+    private final AtsAnalysisMapper atsAnalysisMapper;
     private final PdfExtractionService pdfExtractionService;
     private final AiResumeService aiResumeService;
 
@@ -400,6 +403,16 @@ public class ResumeServiceImpl implements ResumeService {
 
         Resume resume = resumeRepository.findByIdAndUserIdAndDeletedFalse(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume", "id", id));
+
+        // Reuse an existing analysis for the same resume + JD instead of
+        // creating a duplicate row and re-calling the AI unnecessarily.
+        Optional<AtsAnalysis> existing = atsAnalyseRepository
+                .findFirstByResumeIdAndJobDescriptionOrderByCreatedAtDesc(id, jobDescription);
+
+        if(existing.isPresent()) {
+            log.info("Reusing existing ATS analysis {} for resume {}", existing.get().getId(), id);
+            return atsAnalysisMapper.toAtsAnalysisResponse(existing.get());
+        }
 
         AtsAnalysisResponse response = aiResumeService.analyseJobMatch(resumeMapper.toResumeResponse(resume), jobDescription);
 
