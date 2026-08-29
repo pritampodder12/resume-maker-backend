@@ -3,11 +3,9 @@ package com.resumebuilder.controller;
 import com.resumebuilder.constant.AppConstants;
 import com.resumebuilder.dto.request.AtsAnalysisRequest;
 import com.resumebuilder.dto.request.CreateResumeRequest;
+import com.resumebuilder.dto.request.SuggestionRequest;
 import com.resumebuilder.dto.request.UpdateResumeRequest;
-import com.resumebuilder.dto.response.ApiResponse;
-import com.resumebuilder.dto.response.AtsAnalysisResponse;
-import com.resumebuilder.dto.response.PagedResponse;
-import com.resumebuilder.dto.response.ResumeResponse;
+import com.resumebuilder.dto.response.*;
 import com.resumebuilder.service.ResumeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -93,11 +91,23 @@ public class ResumeController {
     }
 
     @PostMapping("/{id}/ats-analysis")
-    @Operation(summary = "Get Resume ATS score", description = "ATS score correspond to a job description")
+    @Operation(summary = "Generate Resume ATS score", description = "ATS score correspond to a job description")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Resume Analysis successful")
     public ResponseEntity<ApiResponse<AtsAnalysisResponse>> atsAnalysisFromJD(
             @Valid @RequestBody AtsAnalysisRequest request,
             @Parameter(description = "Resume ID") @PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success("ATS analysis successful", resumeService.analyseResume(id, request.getJobDescription())));
     }
+
+    @PostMapping("/{resumeId}/{analysisId}/suggestions/")
+    @Operation(summary = "Get AI suggestions for a resume section",
+            description = "Generates KEYWORD/REWRITE/METRIC suggestions for one section, based on a prior ATS analysis")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Suggestions generated successfully")
+    public ResponseEntity<ApiResponse<SuggestionsResponse>> generateSuggestion(
+            @Parameter(description = "Resume ID") @PathVariable UUID resumeId,
+            @Parameter(description = "Analysis ID") @PathVariable UUID analysisId,
+            @Valid @RequestBody SuggestionRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Suggestions generated successful", resumeService.generateSuggestion(resumeId, analysisId, request.getSection())));
+    }
+
 }

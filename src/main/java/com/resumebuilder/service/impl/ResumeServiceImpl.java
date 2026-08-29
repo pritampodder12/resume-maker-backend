@@ -6,7 +6,9 @@ import com.resumebuilder.dto.request.UpdateResumeRequest;
 import com.resumebuilder.dto.response.AtsAnalysisResponse;
 import com.resumebuilder.dto.response.PagedResponse;
 import com.resumebuilder.dto.response.ResumeResponse;
+import com.resumebuilder.dto.response.SuggestionsResponse;
 import com.resumebuilder.entity.*;
+import com.resumebuilder.exception.BadRequestException;
 import com.resumebuilder.exception.ResourceNotFoundException;
 import com.resumebuilder.exception.UnauthorizedException;
 import com.resumebuilder.mapper.AtsAnalysisMapper;
@@ -440,6 +442,42 @@ public class ResumeServiceImpl implements ResumeService {
 
         response.setAnalysisId(saved.getId());
         return response;
+    }
+
+    @Override
+    @Transactional
+    public SuggestionsResponse generateSuggestion(UUID resumeId, UUID analysisId, String section) {
+        log.info("Generating {} suggestions for resume {} (analysis {})", section, resumeId, analysisId);
+
+        UUID userId = getCurrentUserId();
+
+        Resume resume = resumeRepository.findByIdAndUserIdAndDeletedFalse(resumeId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resume", "id", resumeId));
+
+        AtsAnalysis atsAnalysis = atsAnalyseRepository.findByIdAndResumeId(analysisId, resumeId)
+                .orElseThrow(() -> new ResourceNotFoundException("AtsAnalysis", "id", analysisId));
+
+        List<String> missingKeyword = atsAnalysis.getKeywords().stream()
+                .filter(k -> !k.isMatched())
+                .map(AtsAnalysisKeyword::getKeyword)
+                .toList();
+
+        ResumeResponse resumeResponse = resumeMapper.toResumeResponse(resume);
+
+        Object sectionData = resolveSectionData(section, resumeResponse);
+
+        return aiResumeService.generateSuggestions(sectionData, section, atsAnalysis.getJobDescription(), missingKeyword);
+    }
+
+    private Object resolveSectionData(String section, ResumeResponse resumeResponse) {
+        return switch (section.toUpperCase()) {
+            case "EXPERIENCE" -> resumeResponse.getExperience();
+            case "EDUCATION" -> resumeResponse.getEducation();
+            case "SKILLS" -> resumeResponse.getSkills();
+            case "PROJECTS" -> resumeResponse.getProjects();
+            case "CERTIFICATIONS" -> resumeResponse.getCertifications();
+            default -> throw new BadRequestException("Unsupported section: " + section);
+        };
     }
 
 }

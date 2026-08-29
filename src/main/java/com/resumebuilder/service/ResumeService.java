@@ -5,6 +5,7 @@ import com.resumebuilder.dto.request.UpdateResumeRequest;
 import com.resumebuilder.dto.response.AtsAnalysisResponse;
 import com.resumebuilder.dto.response.PagedResponse;
 import com.resumebuilder.dto.response.ResumeResponse;
+import com.resumebuilder.dto.response.SuggestionsResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
@@ -24,4 +25,6 @@ public interface ResumeService {
     ResumeResponse createResumeFromPdf(MultipartFile file);
 
     AtsAnalysisResponse analyseResume(UUID id, String jobDescription);
+
+    SuggestionsResponse generateSuggestion(UUID resumeId, UUID analysisId, String section);
 }
