@@ -397,7 +397,7 @@ public class ResumeServiceImpl implements ResumeService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public AtsAnalysisResponse analyseResume(UUID id, String jobDescription) {
         UUID userId = getCurrentUserId();
 
