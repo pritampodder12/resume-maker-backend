@@ -23,12 +23,12 @@ public class SuggestionsResponse {
         private String title;
         private String description;
         private String currentText;
-        private String suggestionText;
+        private String suggestedText;
     }
 
     @Data
     private static class TargetRef {
-        private Integer entryInteger;
+        private Integer entryIndex;
         private Integer bulletIndex;
     }
 

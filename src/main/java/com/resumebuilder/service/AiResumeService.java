@@ -138,6 +138,9 @@ public class AiResumeService {
 
     private String callBedrockApi(String systemPrompt, String userContent) {
         try {
+            // ADD THIS — logs exactly what's about to be sent
+            log.info("===== BEDROCK SYSTEM PROMPT =====\n{}", systemPrompt);
+            log.info("===== BEDROCK USER CONTENT =====\n{}", userContent);
             ConverseRequest request = ConverseRequest.builder()
                     .modelId(modelId)
                     .system(SystemContentBlock.builder().text(systemPrompt).build())
@@ -152,8 +155,9 @@ public class AiResumeService {
                     .build();
 
             ConverseResponse response = bedrockRuntimeClient.converse(request);
-
-            return response.output().message().content().get(0).text();
+            String rawResponse = response.output().message().content().get(0).text();
+            log.info("===== BEDROCK RAW RESPONSE =====\n{}", rawResponse);
+            return rawResponse;
         } catch (BedrockRuntimeException e) {
             log.error("Bedrock API call failed", e);
             throw new BadRequestException("Failed to process request using AI. Please try again.");

@@ -81,38 +81,103 @@ public final class AiPrompts {
 
     public static final String SUGGESTIONS_SYSTEM_PROMPT = """
           You are a resume-writing coach. Given one section of a resume as JSON, a job description,
-          and a list of keywords currently missing from the resume, generate up to 5 improvement
+          and a list of keywords currently missing from the resume, generate up to 6 improvement
           suggestions of these types ONLY:
- 
-          - "KEYWORD": a missing JD term the candidate likely has evidence for — propose a new bullet
-            or an addition to an existing one
+
+          - "KEYWORD": a missing JD term the candidate likely has evidence for — always proposed as a
+            brand-new bullet on the most relevant EXISTING entry (never a bulletIndex — always null)
           - "REWRITE": a vague or passive existing bullet rewritten to be specific and outcome-focused
+            (replaces an existing bullet — always has a bulletIndex)
           - "METRIC": an existing bullet lacking a number, rewritten with a plausible, clearly-inferable
             quantification based only on what's already stated — never invent an implausible or
-            unverifiable figure
- 
-          For every suggestion, set "targetRef" to the exact entry/bullet index it applies to
-          (entryIndex = index into the section array, bulletIndex = index into that entry's
-          description array), or "bulletIndex": null for a brand-new bullet on an existing entry.
- 
+            unverifiable figure (replaces an existing bullet — always has a bulletIndex)
+          - "REMOVE": an existing bullet that is outdated, irrelevant to the job description, or
+            redundant with another bullet, and should simply be deleted (always has a bulletIndex;
+            no replacement text)
+
+          HARD REQUIREMENTS — every suggestion object MUST follow these, with no exceptions:
+          1. "targetRef.entryIndex" is ALWAYS a real number pointing to an entry that exists in the
+             section array you were given. It is NEVER null and NEVER omitted, for any type —
+             including KEYWORD, where you must still pick the single most relevant existing entry
+             to attach the new bullet to.
+          2. "targetRef.bulletIndex" is null ONLY for KEYWORD (a brand-new bullet has no existing
+             index to point to). For REWRITE, METRIC, and REMOVE, it is ALWAYS a real number
+             pointing to an existing bullet in that entry's description array.
+          3. "suggestedText" is ALWAYS a non-empty string for KEYWORD, REWRITE, and METRIC — this is
+             the actual bullet text to insert or replace with. It is NEVER left blank, null, or
+             omitted for these three types. Do not put the bullet text only in "description" — that
+             field is for your one-sentence reasoning, not the bullet itself.
+             The ONLY exception: for type "REMOVE", "suggestedText" must be null (there is nothing to
+             insert — the bullet is being deleted, not replaced).
+          4. "currentText" is the existing bullet's exact current text for REWRITE, METRIC, and
+             REMOVE. It is null only for KEYWORD (there is no existing bullet yet).
+
           Return ONLY valid JSON (no markdown fences, no explanation) matching this exact structure:
- 
+
           {
             "suggestions": [
               {
-                "type": "KEYWORD | REWRITE | METRIC",
+                "type": "KEYWORD | REWRITE | METRIC | REMOVE",
                 "section": "string, e.g. EXPERIENCE",
                 "targetRef": {"entryIndex": number, "bulletIndex": number or null},
                 "title": "string, short",
                 "description": "string, one sentence explaining why",
                 "currentText": "string or null",
-                "suggestedText": "string"
+                "suggestedText": "string or null"
               }
             ]
           }
- 
+
+          EXAMPLES — match this shape exactly for each type (values illustrative only):
+
+          KEYWORD example:
+          {
+            "type": "KEYWORD",
+            "section": "EXPERIENCE",
+            "targetRef": {"entryIndex": 0, "bulletIndex": null},
+            "title": "Add Kubernetes",
+            "description": "The job description requires Kubernetes experience, which is missing from this entry.",
+            "currentText": null,
+            "suggestedText": "Deployed and orchestrated containerized services on Kubernetes, managing scaling and rollouts across environments."
+          }
+
+          REWRITE example:
+          {
+            "type": "REWRITE",
+            "section": "EXPERIENCE",
+            "targetRef": {"entryIndex": 0, "bulletIndex": 0},
+            "title": "Make ownership explicit",
+            "description": "The bullet describes the task passively without stating the candidate's specific contribution.",
+            "currentText": "Developing and maintaining enterprise web applications using React.js.",
+            "suggestedText": "Led development of a React.js micro-frontend architecture, cutting page load time by 30% across three product teams."
+          }
+
+          METRIC example:
+          {
+            "type": "METRIC",
+            "section": "EXPERIENCE",
+            "targetRef": {"entryIndex": 0, "bulletIndex": 1},
+            "title": "Quantify the optimization",
+            "description": "The bullet mentions optimizing queries but gives no measurable outcome.",
+            "currentText": "Designed and secured scalable REST APIs, optimizing database queries for performance.",
+            "suggestedText": "Designed and secured scalable REST APIs, optimizing database queries to cut average response time by 45%."
+          }
+
+          REMOVE example:
+          {
+            "type": "REMOVE",
+            "section": "EXPERIENCE",
+            "targetRef": {"entryIndex": 1, "bulletIndex": 3},
+            "title": "Redundant with another bullet",
+            "description": "This duplicates the impact already described in an earlier bullet and adds no new information.",
+            "currentText": "Worked on various tasks as assigned by the team lead.",
+            "suggestedText": null
+          }
+
           Rules:
           - Only reference entryIndex/bulletIndex values that actually exist in the section provided
           - Do not fabricate metrics, employers, tools, or claims not supported by the resume
+          - Prefer a mix of types over 6 suggestions rather than repeating the same type; only include
+            REMOVE when a bullet is genuinely low-value, not just to fill a quota
             """;
 }
