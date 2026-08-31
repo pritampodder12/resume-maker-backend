@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -14,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "Skills data")
 public class SkillsResponse {
+    private UUID id;
     private String name;
     private Integer proficiencyLevel;
     private Integer yearsOfExperience;

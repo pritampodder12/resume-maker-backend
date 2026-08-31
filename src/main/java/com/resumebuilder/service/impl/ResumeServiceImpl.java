@@ -20,6 +20,7 @@ import com.resumebuilder.security.CustomUserDetails;
 import com.resumebuilder.service.AiResumeService;
 import com.resumebuilder.service.PdfExtractionService;
 import com.resumebuilder.service.ResumeService;
+import com.resumebuilder.util.SuggestionSectionResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -49,6 +50,7 @@ public class ResumeServiceImpl implements ResumeService {
     private final AtsAnalysisMapper atsAnalysisMapper;
     private final PdfExtractionService pdfExtractionService;
     private final AiResumeService aiResumeService;
+    private final SuggestionSectionResolver suggestionSectionResolver;
 
     @Override
     @Transactional
@@ -411,7 +413,7 @@ public class ResumeServiceImpl implements ResumeService {
         Optional<AtsAnalysis> existing = atsAnalyseRepository
                 .findFirstByResumeIdAndJobDescriptionOrderByCreatedAtDesc(id, jobDescription);
 
-        if(existing.isPresent()) {
+        if (existing.isPresent()) {
             log.info("Reusing existing ATS analysis {} for resume {}", existing.get().getId(), id);
             return atsAnalysisMapper.toAtsAnalysisResponse(existing.get());
         }
@@ -464,20 +466,12 @@ public class ResumeServiceImpl implements ResumeService {
 
         ResumeResponse resumeResponse = resumeMapper.toResumeResponse(resume);
 
-        Object sectionData = resolveSectionData(section, resumeResponse);
+        Object sectionData = suggestionSectionResolver.resolveSectionData(section, resumeResponse);
 
-        return aiResumeService.generateSuggestions(sectionData, section, atsAnalysis.getJobDescription(), missingKeyword);
+        SuggestionsResponse response = aiResumeService.generateSuggestions(sectionData, section, atsAnalysis.getJobDescription(), missingKeyword);
+
+        suggestionSectionResolver.substituteEntryIds(response, section, resumeResponse);
+
+        return response;
     }
-
-    private Object resolveSectionData(String section, ResumeResponse resumeResponse) {
-        return switch (section.toUpperCase()) {
-            case "EXPERIENCE" -> resumeResponse.getExperience();
-            case "EDUCATION" -> resumeResponse.getEducation();
-            case "SKILLS" -> resumeResponse.getSkills();
-            case "PROJECTS" -> resumeResponse.getProjects();
-            case "CERTIFICATIONS" -> resumeResponse.getCertifications();
-            default -> throw new BadRequestException("Unsupported section: " + section);
-        };
-    }
-
 }

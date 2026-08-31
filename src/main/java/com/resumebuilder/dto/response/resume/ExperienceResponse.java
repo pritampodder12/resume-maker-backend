@@ -6,8 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -15,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "Experience data")
 public class ExperienceResponse {
+    private UUID id;
     private String companyName;
     private String position;
     private String location;

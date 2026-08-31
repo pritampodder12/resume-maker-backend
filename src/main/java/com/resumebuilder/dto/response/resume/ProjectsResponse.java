@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -16,6 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "Projects data")
 public class ProjectsResponse {
+    private UUID id;
     private String name;
     private List<String> description;
     private String technologies;

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -15,6 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "Education data")
 public class EducationResponse {
+    private UUID id;
     private String institutionName;
     private String degree;
     private String fieldOfStudy;

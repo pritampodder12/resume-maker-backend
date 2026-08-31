@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -15,6 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @Schema(description = "Certification data")
 public class CertificationsResponse {
+    private UUID id;
     private String name;
     private String issuingOrganization;
     private String credentialId;
