@@ -470,7 +470,7 @@ public class ResumeServiceImpl implements ResumeService {
 
         SuggestionsResponse response = aiResumeService.generateSuggestions(sectionData, section, atsAnalysis.getJobDescription(), missingKeyword);
 
-        suggestionSectionResolver.substituteEntryIds(response, section, resumeResponse);
+//        suggestionSectionResolver.substituteEntryIds(response, section, resumeResponse);
 
         return response;
     }

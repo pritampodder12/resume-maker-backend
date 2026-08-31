@@ -99,7 +99,7 @@ public class ResumeController {
         return ResponseEntity.ok(ApiResponse.success("ATS analysis successful", resumeService.analyseResume(id, request.getJobDescription())));
     }
 
-    @PostMapping("/{resumeId}/{analysisId}/suggestions/")
+    @PostMapping("/{resumeId}/{analysisId}/suggestions")
     @Operation(summary = "Get AI suggestions for a resume section",
             description = "Generates KEYWORD/REWRITE/METRIC suggestions for one section, based on a prior ATS analysis")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Suggestions generated successfully")
