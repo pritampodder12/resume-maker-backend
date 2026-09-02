@@ -20,7 +20,7 @@ public class SuggestionSectionResolver {
 //            case "EDUCATION" -> resumeResponse.getEducation();
             case "SKILLS" -> resumeResponse.getSkills();
             case "PROJECTS" -> resumeResponse.getProjects();
-            case "CERTIFICATIONS" -> resumeResponse.getCertifications();
+//            case "CERTIFICATIONS" -> resumeResponse.getCertifications();
             case "SUMMARY" -> resumeResponse.getObjective();
             default -> throw new BadRequestException("Unsupported section: " + section);
         };
