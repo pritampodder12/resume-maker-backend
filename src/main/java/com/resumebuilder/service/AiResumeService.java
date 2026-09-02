@@ -122,18 +122,24 @@ public class AiResumeService {
                                                String jobDescription,
                                                List<String> missingKeywords) {
         try {
+            // For SKILLS, strip id/sortOrder/proficiency/etc — send only category -> [name, name, ...]
+            // so there is no numeric field the model can mistake for an index.
+            Object payload = "SKILLS".equalsIgnoreCase(section)
+                    ? groupSkillsByCategory(sectionData)
+                    : sectionData;
+
             return """
-                    RESUME SECTION (%s):
-                    %s
- 
-                    JOB DESCRIPTION:
-                    %s
- 
-                    MISSING KEYWORDS:
-                    %s
-                    """.formatted(
+                RESUME SECTION (%s):
+                %s
+
+                JOB DESCRIPTION:
+                %s
+
+                MISSING KEYWORDS:
+                %s
+                """.formatted(
                     section,
-                    objectMapper.writeValueAsString(sectionData),
+                    objectMapper.writeValueAsString(payload),
                     jobDescription,
                     objectMapper.writeValueAsString(missingKeywords)
             );
@@ -243,6 +249,21 @@ public class AiResumeService {
         } catch (Exception e) {
             log.warn("Failed to write dev cache file for key {}", key, e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, List<String>> groupSkillsByCategory(Object sectionData) {
+        // sectionData arrives as a generic Object (List<Skill> or already-deserialized List<Map>),
+        // so normalize through the ObjectMapper rather than casting directly.
+        List<Map<String, Object>> skills = objectMapper.convertValue(
+                sectionData, new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {}
+        );
+
+        return skills.stream().collect(java.util.stream.Collectors.groupingBy(
+                s -> String.valueOf(s.get("category")),
+                java.util.LinkedHashMap::new,
+                java.util.stream.Collectors.mapping(s -> String.valueOf(s.get("name")), java.util.stream.Collectors.toList())
+        ));
     }
 }
 

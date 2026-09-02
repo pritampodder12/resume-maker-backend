@@ -20,7 +20,7 @@ public interface AtsAnalysisMapper {
 
         AtsAnalysisResponse.AtsScore score = new AtsAnalysisResponse.AtsScore();
         score.setOverall(entity.getOverallScore());
-        score.setKeyword(entity.getKeywordsScore());
+        score.setKeywords(entity.getKeywordsScore());
         score.setFormatting(entity.getFormattingScore());
         score.setImpact(entity.getImpactScore());
 

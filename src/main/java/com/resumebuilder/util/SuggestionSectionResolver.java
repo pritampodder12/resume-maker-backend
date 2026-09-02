@@ -17,7 +17,7 @@ public class SuggestionSectionResolver {
     public Object resolveSectionData(String section, ResumeResponse resumeResponse) {
         return switch (section.toUpperCase()) {
             case "EXPERIENCE" -> resumeResponse.getExperience();
-            case "EDUCATION" -> resumeResponse.getEducation();
+//            case "EDUCATION" -> resumeResponse.getEducation();
             case "SKILLS" -> resumeResponse.getSkills();
             case "PROJECTS" -> resumeResponse.getProjects();
             case "CERTIFICATIONS" -> resumeResponse.getCertifications();

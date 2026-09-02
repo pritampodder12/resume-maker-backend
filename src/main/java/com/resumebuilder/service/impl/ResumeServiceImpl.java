@@ -413,19 +413,19 @@ public class ResumeServiceImpl implements ResumeService {
         Optional<AtsAnalysis> existing = atsAnalyseRepository
                 .findFirstByResumeIdAndJobDescriptionOrderByCreatedAtDesc(id, jobDescription);
 
-//        if (existing.isPresent() && isStillValid(existing.get(), resume)) {
-//            log.info("Reusing existing ATS analysis {} for resume {}", existing.get().getId(), id);
-//            return atsAnalysisMapper.toAtsAnalysisResponse(existing.get());
-//        }
-//
-//        if (existing.isPresent()) {
-//            log.info("Existing ATS analysis {} is stale (resume updated after analysis) — re-analysing", existing.get().getId());
-//        }
-
-        if (existing.isPresent()) {
+        if (existing.isPresent() && isStillValid(existing.get(), resume)) {
             log.info("Reusing existing ATS analysis {} for resume {}", existing.get().getId(), id);
             return atsAnalysisMapper.toAtsAnalysisResponse(existing.get());
         }
+
+        if (existing.isPresent()) {
+            log.info("Existing ATS analysis {} is stale (resume updated after analysis) — re-analysing", existing.get().getId());
+        }
+
+//        if (existing.isPresent()) {
+//            log.info("Reusing existing ATS analysis {} for resume {}", existing.get().getId(), id);
+//            return atsAnalysisMapper.toAtsAnalysisResponse(existing.get());
+//        }
 
         AtsAnalysisResponse response = aiResumeService.analyseJobMatch(resumeMapper.toResumeResponse(resume), jobDescription);
 
@@ -433,7 +433,7 @@ public class ResumeServiceImpl implements ResumeService {
                 .resume(resume)
                 .jobDescription(jobDescription)
                 .overallScore(response.getAtsScore().getOverall())
-                .keywordsScore(response.getAtsScore().getKeyword())
+                .keywordsScore(response.getAtsScore().getKeywords())
                 .formattingScore(response.getAtsScore().getFormatting())
                 .impactScore(response.getAtsScore().getImpact())
                 .build();

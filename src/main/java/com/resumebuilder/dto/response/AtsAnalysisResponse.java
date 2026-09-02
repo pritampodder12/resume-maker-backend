@@ -20,7 +20,7 @@ public class AtsAnalysisResponse {
     @Data
     public static class AtsScore {
         private int overall;
-        private int keyword;
+        private int keywords;
         private int formatting;
         private int impact;
     }
