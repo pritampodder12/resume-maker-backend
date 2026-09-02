@@ -21,6 +21,7 @@ public class SuggestionSectionResolver {
             case "SKILLS" -> resumeResponse.getSkills();
             case "PROJECTS" -> resumeResponse.getProjects();
             case "CERTIFICATIONS" -> resumeResponse.getCertifications();
+            case "SUMMARY" -> resumeResponse.getObjective();
             default -> throw new BadRequestException("Unsupported section: " + section);
         };
     }
@@ -35,7 +36,7 @@ public class SuggestionSectionResolver {
         return switch (section.toUpperCase()) {
             case "EXPERIENCE" -> resumeResponse.getExperience().stream().map(ExperienceResponse::getId).toList();
             case "EDUCATION" -> resumeResponse.getEducation().stream().map(EducationResponse::getId).toList();
-            case "SKILLS" -> flattenSkills(resumeResponse.getSkills()).stream().map(SkillsResponse::getId).toList();
+            case "SKILLS" -> resumeResponse.getSkills().stream().map(SkillsResponse::getId).toList();
             case "PROJECTS" -> resumeResponse.getProjects().stream().map(ProjectsResponse::getId).toList();
             case "CERTIFICATIONS" ->
                     resumeResponse.getCertifications().stream().map(CertificationsResponse::getId).toList();

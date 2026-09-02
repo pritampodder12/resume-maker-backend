@@ -37,31 +37,31 @@ public class CreateResumeRequest {
     @Valid
     @Schema(description = "Education entries")
     @Builder.Default
-    private List<EducationRequest> education = new ArrayList<>();;
+    private List<EducationRequest> education = new ArrayList<>();
 
     @Valid
     @Schema(description = "Experience entries")
     @Builder.Default
-    private List<ExperienceRequest> experience = new ArrayList<>();;
+    private List<ExperienceRequest> experience = new ArrayList<>();
 
     @Valid
     @Schema(description = "Certifications entries")
     @Builder.Default
-    private List<CertificationsRequest> certifications = new ArrayList<>();;
+    private List<CertificationsRequest> certifications = new ArrayList<>();
 
     @Valid
     @Schema(description = "Projects entries")
     @Builder.Default
-    private List<ProjectsRequest> projects = new ArrayList<>();;
+    private List<ProjectsRequest> projects = new ArrayList<>();
 
     @Valid
     @Schema(description = "Skills entries")
     @Builder.Default
-    private List<SkillsRequest> skills = new ArrayList<>();;
+    private List<SkillsRequest> skills = new ArrayList<>();
 
     @Valid
     @Schema(description = "Resume Section")
     @Builder.Default
-    private List<SectionRequest> sections = new ArrayList<>();;
+    private List<SectionRequest> sections = new ArrayList<>();
 
 }

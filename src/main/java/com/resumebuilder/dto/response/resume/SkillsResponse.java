@@ -17,6 +17,7 @@ import java.util.UUID;
 public class SkillsResponse {
     private UUID id;
     private String name;
+    private String category;
     private Integer proficiencyLevel;
     private Integer yearsOfExperience;
     private List<String> description;

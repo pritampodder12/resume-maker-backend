@@ -103,7 +103,14 @@ public class AiResumeService {
             return cached;
         }
 
-        String aiResponse = callBedrockApi(AiPrompts.SUGGESTIONS_SYSTEM_PROMPT, userContent);
+        String systemPrompt = switch (section.toUpperCase()) {
+            case "EXPERIENCE", "PROJECTS", "EDUCATION", "CERTIFICATIONS" -> AiPrompts.SUGGESTIONS_SYSTEM_PROMPT;
+            case "SKILLS" -> AiPrompts.SKILLS_SUGGESTIONS_SYSTEM_PROMPT;
+            case "SUMMARY" -> AiPrompts.SUMMARY_SUGGESTIONS_SYSTEM_PROMPT;
+            default -> throw new BadRequestException("Unsupported section: " + section);
+        };
+
+        String aiResponse = callBedrockApi(systemPrompt, userContent);
         SuggestionsResponse result = deserialize(aiResponse, SuggestionsResponse.class);
         writeToDisk(SUGGESTIONS_CACHE_DIR, key, result);
 

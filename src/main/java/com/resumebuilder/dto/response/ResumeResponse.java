@@ -60,7 +60,7 @@ public class ResumeResponse {
 
     private List<ProjectsResponse> projects;
 
-    private Map<String, List<SkillsResponse>> skills;
+    private List<SkillsResponse> skills;
 
     private List<SectionResponse> sections;
 }

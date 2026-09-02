@@ -413,6 +413,15 @@ public class ResumeServiceImpl implements ResumeService {
         Optional<AtsAnalysis> existing = atsAnalyseRepository
                 .findFirstByResumeIdAndJobDescriptionOrderByCreatedAtDesc(id, jobDescription);
 
+//        if (existing.isPresent() && isStillValid(existing.get(), resume)) {
+//            log.info("Reusing existing ATS analysis {} for resume {}", existing.get().getId(), id);
+//            return atsAnalysisMapper.toAtsAnalysisResponse(existing.get());
+//        }
+//
+//        if (existing.isPresent()) {
+//            log.info("Existing ATS analysis {} is stale (resume updated after analysis) — re-analysing", existing.get().getId());
+//        }
+
         if (existing.isPresent()) {
             log.info("Reusing existing ATS analysis {} for resume {}", existing.get().getId(), id);
             return atsAnalysisMapper.toAtsAnalysisResponse(existing.get());
@@ -473,5 +482,10 @@ public class ResumeServiceImpl implements ResumeService {
 //        suggestionSectionResolver.substituteEntryIds(response, section, resumeResponse);
 
         return response;
+    }
+
+    private boolean isStillValid(AtsAnalysis analysis, Resume resume) {
+        return resume.getUpdatedAt() == null
+                || !resume.getUpdatedAt().isAfter(analysis.getCreatedAt());
     }
 }

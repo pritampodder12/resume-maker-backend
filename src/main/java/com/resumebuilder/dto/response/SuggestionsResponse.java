@@ -51,6 +51,7 @@ public class SuggestionsResponse {
         private Integer entryIndex;
         private UUID entryId;
         private Integer bulletIndex;
+        private String category;
     }
 
 }
